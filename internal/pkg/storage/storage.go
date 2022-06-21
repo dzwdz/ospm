@@ -41,7 +41,7 @@ func (s *storage) List() []string {
 }
 
 func (s *storage) Get(path string) ([]byte, error) {
-	panic("unimplemented")
+	return os.ReadFile(s.base + "/" + filepath.Clean(path))
 }
 
 func (s *storage) Set(path string, data []byte) error {

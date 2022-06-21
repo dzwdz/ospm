@@ -56,13 +56,19 @@ func HandleClient(c net.Conn, totp otp.Ratelimited, db storage.Storage) {
 		for _, file := range db.List() {
 			fmt.Fprintf(c, "LIST %s\n", file)
 		}
-	case verb == "PING":
-		fmt.Fprintf(c, "PONG %s\n", noun)
-	case Debug && verb == "TOTP_TEST":
+	case verb == "GET":
 		if !requireTOTP(c, reader, totp) {
 			return
 		}
-		fmt.Fprintf(c, "DEBUG passed auth\n")
+		buf, err := db.Get(noun)
+		if err != nil {
+			fmt.Fprintf(c, "UERROR nope\n") // TODO better error msg
+		} else {
+			fmt.Fprintf(c, "SUCCESS\n")
+			c.Write(buf)
+		}
+	case verb == "PING":
+		fmt.Fprintf(c, "PONG %s\n", noun)
 	default:
 		fmt.Fprintf(c, "IERROR unknown command\n")
 	}
