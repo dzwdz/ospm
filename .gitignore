@@ -1,2 +1,4 @@
 *.pem
 data/
+/ospmd
+/ospmcli
