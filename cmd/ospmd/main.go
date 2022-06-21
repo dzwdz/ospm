@@ -2,15 +2,17 @@ package main
 
 import (
 	"crypto/tls"
+	"flag"
 	"log"
 	"ospm/internal/pkg/otp"
 	"ospm/internal/pkg/proto"
 )
 
-var bindTo string = ":7733"
+var bindTo string
+var certPath, keyPath string
 
 func loadCerts() []tls.Certificate {
-	cert, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
+	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -18,7 +20,11 @@ func loadCerts() []tls.Certificate {
 }
 
 func main() {
-	proto.Debug = true
+	flag.StringVar(&bindTo, "bind", ":7733", "Address to listen on.")
+	flag.StringVar(&certPath, "cert", "./cert.pem", "")
+	flag.StringVar(&keyPath, "key", "./key.pem", "")
+	flag.BoolVar(&proto.Debug, "debug-insecure", false, "Don't.")
+	flag.Parse()
 
 	auth := otp.InitRatelimited("TESTTESTTESTTESTTESTTEST")
 	log.Printf("listening on %s", bindTo)
