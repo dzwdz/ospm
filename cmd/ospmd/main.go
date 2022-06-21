@@ -6,6 +6,7 @@ import (
 	"log"
 	"ospm/internal/pkg/otp"
 	"ospm/internal/pkg/proto"
+	"ospm/internal/pkg/storage"
 )
 
 var bindTo string
@@ -26,6 +27,8 @@ func main() {
 	flag.BoolVar(&proto.Debug, "debug-insecure", false, "Don't.")
 	flag.Parse()
 
+	db := storage.Init("./data")
+
 	auth := otp.InitRatelimited("TESTTESTTESTTESTTESTTEST")
 	log.Printf("listening on %s", bindTo)
 
@@ -40,6 +43,6 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		go proto.HandleClient(conn, auth)
+		go proto.HandleClient(conn, auth, db)
 	}
 }

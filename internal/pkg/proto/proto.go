@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"ospm/internal/pkg/otp"
+	"ospm/internal/pkg/storage"
 )
 
 var Debug = false
@@ -20,7 +21,7 @@ func requireTOTP(c net.Conn, totp otp.Ratelimited) bool {
 	var pass int
 	_, err := fmt.Fscanf(c, "TOTP %d\n", &pass)
 	if err != nil {
-		fmt.Fprintf(c, "IERROR syntax\n")
+		fmt.Fprintf(c, "IERROR expected TOTP\n")
 		return false
 	}
 	if valid, msg := totp.Verify(pass); !valid {
@@ -32,15 +33,28 @@ func requireTOTP(c net.Conn, totp otp.Ratelimited) bool {
 	return true
 }
 
-func HandleClient(c net.Conn, totp otp.Ratelimited) {
+func HandleClient(c net.Conn, totp otp.Ratelimited, db storage.Storage) {
 	defer c.Close()
 	if Debug {
 		fmt.Fprintf(c, "DEBUG i am insecure\n")
 	}
-	if !requireTOTP(c, totp) {
+
+	var cmd string
+	if _, err := fmt.Fscanf(c, "%s\n", &cmd); err != nil {
+		fmt.Fprintf(c, "IERROR ?\n")
 		return
 	}
-	if Debug {
+	switch {
+	case cmd == "LIST":
+		for _, file := range db.List() {
+			fmt.Fprintf(c, "LIST %s\n", file)
+		}
+	case Debug && cmd == "TOTP_TEST":
+		if !requireTOTP(c, totp) {
+			return
+		}
 		fmt.Fprintf(c, "DEBUG passed auth\n")
+	default:
+		fmt.Fprintf(c, "IERROR unknown command\n")
 	}
 }
