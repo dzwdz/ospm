@@ -65,7 +65,7 @@ func main() {
 				fmt.Fprintf(conn, "TOTP %s\n", code)
 			case line == "SUCCESS\n":
 				reader.WriteTo(os.Stdout)
-				// TODO get rid of the weird EOF string at the end
+				return
 			// TODO parse UERROR
 			default:
 				fmt.Fprintf(os.Stderr, "unrecognized server message\n\t%s\n", line)
