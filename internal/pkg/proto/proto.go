@@ -12,6 +12,7 @@ import (
 )
 
 var Debug = false
+var MaxSize = 16 * 1024
 
 func requireTOTP(c net.Conn, reader io.Reader, totp otp.Ratelimited) bool {
 	fmt.Fprintf(c, "NEED TOTP\n")
@@ -66,6 +67,29 @@ func HandleClient(c net.Conn, totp otp.Ratelimited, db storage.Storage) {
 		} else {
 			fmt.Fprintf(c, "SUCCESS\n")
 			c.Write(buf)
+		}
+	case verb == "ADD":
+		var size int
+		_, err := fmt.Fscanf(reader, "SIZE %d\n", &size)
+		if err != nil || size <= 0 {
+			fmt.Fprintf(c, "IERROR expected payload size\n")
+			break
+		}
+		if size >= MaxSize {
+			fmt.Fprintf(c, "UERROR payload too big\n")
+			break
+		}
+		buf := make([]byte, size)
+		_, err = io.ReadFull(c, buf)
+		if err != nil {
+			fmt.Fprintf(c, "IERROR partial payload read")
+			break
+		}
+		err = db.Add(noun, buf)
+		if err != nil {
+			fmt.Fprintf(c, "IERROR couldn't add to database\n")
+		} else {
+			fmt.Fprintf(c, "SUCCESS\n")
 		}
 	case verb == "PING":
 		fmt.Fprintf(c, "PONG %s\n", noun)

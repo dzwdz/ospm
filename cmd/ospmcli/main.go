@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 )
@@ -72,8 +73,36 @@ func main() {
 				os.Exit(1)
 			}
 		}
+	case verb == "add":
+		buf, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			fmt.Fprint(os.Stderr, err)
+			os.Exit(1)
+		}
+		fmt.Fprintf(conn, "ADD %s\n", flag.Arg(2))
+		fmt.Fprintf(conn, "SIZE %d\n", len(buf))
+		_, err = conn.Write(buf)
+		if err != nil {
+			fmt.Fprint(os.Stderr, err)
+			os.Exit(1)
+		}
+		for {
+			line, err := reader.ReadString('\n')
+			if err != nil {
+				fmt.Fprint(os.Stderr, err)
+				os.Exit(1)
+			}
+			switch {
+			case line == "SUCCESS\n":
+				reader.WriteTo(os.Stdout)
+				return
+			default:
+				fmt.Fprintf(os.Stderr, "unrecognized server message\n\t%s\n", line)
+				os.Exit(1)
+			}
+		}
 	default:
-		fmt.Fprintln(os.Stderr, "unknown command. available: list, get")
+		fmt.Fprintln(os.Stderr, "unknown command. available: list, get, add")
 		os.Exit(1)
 	}
 }
