@@ -1,16 +1,17 @@
 package storage
 
 import (
+	"net/url" // sanitizing paths in logs
 	"io/fs"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 )
 
 type Storage interface {
 	List() []string
-	Get(path string) ([]byte, error)
-	Set(path string, data []byte) error
+	Get(dbPath string) ([]byte, error)
 }
 
 type storage struct {
@@ -40,10 +41,9 @@ func (s *storage) List() []string {
 	return files
 }
 
-func (s *storage) Get(path string) ([]byte, error) {
-	return os.ReadFile(s.base + "/" + filepath.Clean(path))
-}
-
-func (s *storage) Set(path string, data []byte) error {
-	panic("unimplemented")
+func (s *storage) Get(dbPath string) ([]byte, error) {
+	// TODO write path traversal tests
+	dbPath = path.Clean(path.Join("/", dbPath))
+	log.Printf("db get %s", url.QueryEscape(dbPath))
+	return os.ReadFile(path.Join(s.base, dbPath))
 }
