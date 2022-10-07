@@ -1,0 +1,6 @@
+#!/bin/bash
+# posix sh doesn't have pipefail :(
+set -euo pipefail
+
+age -r age1klvtn44xecay92hjyshqzv7euz946u75h6uuf6j7eq7qgkqk93dq5p0ej6 -a | \
+	./ospmcli -tls-insecure localhost:7733 add "$1"

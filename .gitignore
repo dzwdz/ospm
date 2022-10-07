@@ -1,4 +1,5 @@
 *.pem
+key.txt
 data/
 /ospmd
 /ospmcli

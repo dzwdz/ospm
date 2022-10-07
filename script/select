@@ -1,0 +1,7 @@
+#!/bin/bash
+# posix sh doesn't have pipefail :(
+set -euo pipefail
+
+ACC="$(./ospmcli -tls-insecure localhost:7733 list | fzf)"
+echo selected $ACC >&2
+./ospmcli -tls-insecure localhost:7733 get "$ACC" | age -d -i key.txt
